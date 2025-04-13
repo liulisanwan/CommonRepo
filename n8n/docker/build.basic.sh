@@ -26,7 +26,9 @@ echo "下载 URL: $DOWNLOAD_URL"
 
 # 下载文件
 echo "正在下载 editor-ui.tar.gz..."
-wget -O editor-ui.tar.gz "$DOWNLOAD_URL"
+
+# 使用代理下载
+wget -O editor-ui.tar.gz https://gh-proxy.com/"$DOWNLOAD_URL"
 
 # 检查下载是否成功
 if [ ! -f "editor-ui.tar.gz" ]; then
@@ -58,3 +60,17 @@ echo "已清理下载的压缩包 editor-ui.tar.gz"
 
 # 启动 Docker Compose
 docker compose -f docker-compose.basic.yaml up -d
+# 等待几秒让容器有时间启动
+sleep 5
+
+# 检查n8n容器是否成功运行
+if docker ps | grep -q "n8n.*Up.*5678"; then
+    echo "n8n容器已成功启动"
+    echo "使用 http://localhost:5678 访问"
+    echo "使用docker compose -f docker-compose.basic.yaml down 停止"
+else
+    echo "错误: n8n容器未能正常启动,请检查日志:"
+    docker logs n8n
+    exit 1
+fi
+

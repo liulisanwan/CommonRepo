@@ -4,7 +4,7 @@ networks:
   selfn8n:
 
 x-n8n: &service-n8n
-  image: n8nio/n8n:latest
+  image: docker.m.daocloud.io/n8nio/n8n:latest
   networks: ['selfn8n']
   environment:
     # Postgre数据库相关配置,主要从.env读取
@@ -12,6 +12,9 @@ x-n8n: &service-n8n
     - DB_POSTGRESDB_HOST=postgres
     - DB_POSTGRESDB_USER=${POSTGRES_USER}
     - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+
+    # 非HTTPS访问必须禁用cookie
+    - N8N_SECURE_COOKIE=false
 
     # 是否启用诊断和个性化推荐
     - N8N_DIAGNOSTICS_ENABLED=false
@@ -33,7 +36,7 @@ x-n8n: &service-n8n
 services:
   # Postgre数据库
   postgres:
-    image: postgres:16-alpine
+    image: docker.m.daocloud.io/postgres:16-alpine
     networks: ['selfn8n']
     restart: unless-stopped
     environment:

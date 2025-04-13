@@ -18,12 +18,22 @@ cd CommonRepo
 ```
 n8n/
 ├── docker/         # Docker相关配置文件
+│   ├── build.basic.sh
 │   ├── build.sh
 │   ├── docker-compose.yaml
+│   ├── docker-compose.basic.yaml
 │   └── env.template
 └── nginx/          # Nginx配置文件
     └── n8n.conf
 ```
+如果选择最简化安装，只需执行以下三行
+```bash
+cd n8n/docker
+chmod +x build.basic.sh
+./build.basic.sh
+```
+完整安装Postgre以及HTTPS支持，需要多些几个步骤
+
 ### 2. 配置环境变量
 2.1 复制环境变量模板：
 ```bash
@@ -44,7 +54,6 @@ POSTGRES_PASSWORD=n8n!yyds                     # PostgreSQL密码
 POSTGRES_DB=n8n                                # PostgreSQL数据库名
 N8N_DEFAULT_LOCALE=zh-CN                       # 中文界面的关键配置项
 
-# 以下两项会由build.sh自动生成，无需手动设置
 N8N_ENCRYPTION_KEY=                             # 首次运行build.sh时自动生成
 N8N_USER_MANAGEMENT_JWT_SECRET=                 # 首次运行build.sh时自动生成
 ```

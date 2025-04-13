@@ -3,11 +3,15 @@ version: "3.9"
 services:
   n8n:
     container_name: n8n
+    image: docker.m.daocloud.io/n8nio/n8n:latest
     restart: unless-stopped
     environment:
       # 设置中文区域和界面
       - GENERIC_TIMEZONE=Asia/Shanghai
       - TZ=Asia/Shanghai
+      # 使用非HTTPS访问必须禁用cookie
+      - N8N_SECURE_COOKIE=false
+      # 设置默认语言为中文
       - N8N_DEFAULT_LOCALE=zh-CN
     ports:
       - 5678:5678
@@ -16,8 +20,3 @@ services:
       - ./data:/home/node/.n8n
       # 汉化界面的关键挂载
       - ./dist:/usr/local/lib/node_modules/n8n/node_modules/n8n-editor-ui/dist # 挂载汉化
-    networks:
-      - selfn8n
-        aliases:
-          - n8n
-    

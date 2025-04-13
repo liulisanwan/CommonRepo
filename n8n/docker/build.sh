@@ -57,7 +57,9 @@ echo "下载 URL: $DOWNLOAD_URL"
 
 # 下载文件
 echo "正在下载 editor-ui.tar.gz..."
-wget -O editor-ui.tar.gz "$DOWNLOAD_URL"
+
+# 使用代理下载
+wget -O editor-ui.tar.gz https://gh-proxy.com/"$DOWNLOAD_URL"
 
 # 检查下载是否成功
 if [ ! -f "editor-ui.tar.gz" ]; then
