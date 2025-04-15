@@ -59,7 +59,7 @@ services:
     command:
       - "-c"
       # 自动导入backup目录下的凭证和工作流
-      - "n8n import:credentials --separate --input=/backup/credentials && n8n import:workflow --separate --input=/backup/workflows"
+      - "n8n import:credentials --input=/home/node/backup/credentials && n8n import:workflow --separate --input=/home/node/backup/workflows"
     volumes:
       # 挂载当前路径下的bakcup
       - ./backup:/backup
