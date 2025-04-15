@@ -1,0 +1,346 @@
+{
+  "name": "RSS新闻翻译",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -40,
+        -800
+      ],
+      "id": "cc95a033-9662-43a4-89c6-e250d208a455",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        180,
+        -900
+      ],
+      "id": "acbc75a1-836f-4c50-913c-fac41feed489",
+      "name": "拉取：纽约时报RSS"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        -480
+      ],
+      "id": "756459ad-7ba0-40a4-a53b-dc4608814cbf",
+      "name": "限制：最新10条"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "isoDate",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        -440,
+        -480
+      ],
+      "id": "3d791958-16a9-41c6-bd3d-a726c93db074",
+      "name": "排序：时间最新"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ac26856a-0ead-4dba-94bc-4e2b5846266d",
+              "name": "link",
+              "value": "={{ $('限制：最新10条').item.json.link }}",
+              "type": "string"
+            },
+            {
+              "id": "42ad93c3-3f45-4620-b5c3-b50b750ae86b",
+              "name": "pubDate",
+              "value": "={{ new Date($('限制：最新10条').item.json.pubDate).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) }}",
+              "type": "string"
+            },
+            {
+              "id": "f102d05a-34a8-4971-bc74-938656102068",
+              "name": "message",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        376,
+        -480
+      ],
+      "id": "f8718836-0166-4a67-be5e-538b06d816a7",
+      "name": "整理：表格数据"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {
+          "fileName": "新闻翻译稿"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        596,
+        -480
+      ],
+      "id": "ba836e35-fbb0-448f-b8be-1da76742e0f7",
+      "name": "输出：Excel"
+    },
+    {
+      "parameters": {
+        "model": "grok-2-1212",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        -300
+      ],
+      "id": "cc974864-9c17-4304-8762-d8d265a6608b",
+      "name": "xAI Grok Chat Model",
+      "credentials": {
+        "xAiApi": {
+          "id": "cH0ILaofgvd2SGW1",
+          "name": "xAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.title + $json.content }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "把英文翻译成中文，注意专业性和俚语翻译不要直译而是意译。只输出翻译结果，不要输出其他内容。输入的英文内容是标题+摘要，如果有必要可以整合下内容，使它更通顺不重复。"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        0,
+        -480
+      ],
+      "id": "7d7bd555-bc47-4a2d-b215-1d392d0ad399",
+      "name": "大模型：翻译"
+    },
+    {
+      "parameters": {
+        "sendTo": "qiuyu.chen@live.com",
+        "subject": "纽约时报新闻汇总",
+        "message": "请查看附件",
+        "options": {
+          "appendAttribution": true,
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        816,
+        -480
+      ],
+      "id": "5cbb17d7-4848-4ba9-af9f-6b4eacff883b",
+      "name": "Gmail",
+      "webhookId": "b76d5920-2243-40eb-ac2d-15d6911e2f10",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cNpjYrn3H9RGzW2l",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        400,
+        -800
+      ],
+      "id": "41e0ba6c-3a0b-433f-a2d9-d3722dcba469",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        180,
+        -700
+      ],
+      "id": "1fc89f03-ed90-4a2c-91ce-51019c5ffb68",
+      "name": "拉取：BBC RSS"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "拉取：纽约时报RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "拉取：BBC RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "拉取：纽约时报RSS": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "限制：最新10条": {
+      "main": [
+        [
+          {
+            "node": "大模型：翻译",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "排序：时间最新": {
+      "main": [
+        [
+          {
+            "node": "限制：最新10条",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "整理：表格数据": {
+      "main": [
+        [
+          {
+            "node": "输出：Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI Grok Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "大模型：翻译",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "大模型：翻译": {
+      "main": [
+        [
+          {
+            "node": "整理：表格数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "输出：Excel": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "排序：时间最新",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "拉取：BBC RSS": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6ca7ff62-bfd8-438c-85c5-820a3b6d6c2c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "46045cca4b88b76b646dc0f1285c481b74d7f5d1d9f712ea4e4be83854616298"
+  },
+  "id": "iHBUJts4ftH43rfi",
+  "tags": []
+}

@@ -72,7 +72,7 @@ docker ps
 
 ### 4. 配置Nginx
 4.1 修改Nginx配置文件：
-首先修改 nginx/n8n.conf 中的域名，找到erver_name，将 n8n.yourdomain.com 替换为你的实际域名。
+首先修改 nginx/n8n.conf 中的域名，找到Server_name，将 n8n.yourdomain.com 替换为你的实际域名。
 ```bash
 nano nginx/n8n.conf
 ```
