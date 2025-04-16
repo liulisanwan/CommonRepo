@@ -41,8 +41,8 @@ mkdir -p "$DIST_DIR"
 # 如果 backup 目录不存在则创建
 mkdir -p backup
 # 确保Docker容器中具有正确的权限
-# chown -R 1000:1000 ./backup 
-# chmod -R 775 ./backup
+chown -R 1000:1000 ./backup 
+chmod -R 775 ./backup
 
 # 获取下载 URL
 DOWNLOAD_URL=$(curl -s https://api.github.com/repos/other-blowsnow/n8n-i18n-chinese/releases/latest | jq -r '.assets[] | select(.name == "editor-ui.tar.gz") | .browser_download_url')
