@@ -1,0 +1,340 @@
+{
+  "name": "RSS新闻翻译->多维文档（飞书节点）",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "grok-2-1212",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        660,
+        -580
+      ],
+      "id": "73d15fcc-71f3-4eaa-b7d1-5f6723d1d005",
+      "name": "xAI Grok Chat Model",
+      "credentials": {
+        "xAiApi": {
+          "id": "cH0ILaofgvd2SGW1",
+          "name": "xAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8,
+              "triggerAtMinute": 15
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        400,
+        -1060
+      ],
+      "id": "26e07087-64d4-431d-92b7-c1a2851d6415",
+      "name": "定时触发器"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.title + $json.content }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "把英文翻译成中文，注意专业性和俚语翻译不要直译而是意译。只输出翻译结果，不要输出其他内容。输入的英文内容是标题+摘要，如果有必要可以整合下内容，使它更通顺不重复。"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        660,
+        -800
+      ],
+      "id": "14e91697-f4e2-4e8b-9e05-fb4f36e1db4b",
+      "name": "大模型:翻译"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        440,
+        -800
+      ],
+      "id": "9d5f7742-de4f-4d49-9853-b01545868c09",
+      "name": "限制:最新10条"
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "isoDate",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        220,
+        -800
+      ],
+      "id": "cb04dc07-4172-454b-9f5b-2b271269b541",
+      "name": "排序:时间最新"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        840,
+        -1060
+      ],
+      "id": "edeff1da-29a9-4ef8-8b02-03aba62ea882",
+      "name": "合并"
+    },
+    {
+      "parameters": {
+        "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        620,
+        -1220
+      ],
+      "id": "44add27b-972e-4adf-af7d-8acd683debff",
+      "name": "拉取:纽约时报RSS"
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.bbci.co.uk/news/world/rss.xml",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        620,
+        -1020
+      ],
+      "id": "e1fceb1d-47c7-4d55-83c0-cf1060f0f1bf",
+      "name": "拉取:BBC RSS"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ac26856a-0ead-4dba-94bc-4e2b5846266d",
+              "name": "url",
+              "value": "={{ $('限制:最新10条').item.json.link }}",
+              "type": "string"
+            },
+            {
+              "id": "42ad93c3-3f45-4620-b5c3-b50b750ae86b",
+              "name": "pubDate",
+              "value": "={{ new Date($('限制:最新10条').item.json.pubDate).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) }}",
+              "type": "string"
+            },
+            {
+              "id": "f102d05a-34a8-4971-bc74-938656102068",
+              "name": "content",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        -800
+      ],
+      "id": "7197ee57-7bcb-42e3-b9c6-c0d101f8c22b",
+      "name": "整理:表格数据"
+    },
+    {
+      "parameters": {
+        "resource": "bitable",
+        "operation": "bitable:table:record:add",
+        "app_toke": "ZLQ1bK2YBa3HglspcuecxAHgnVg",
+        "table_id": "tblaTsrOno6BwFEy",
+        "body": "={\"fields\": {\"pubDate\": \"{{ $json.pubDate }}\", \"url\":\"{{ $json.url }}\", \"content\": \"{{ $json.content }}\"}}"
+      },
+      "type": "n8n-nodes-feishu-lite.feishuNode",
+      "typeVersion": 1,
+      "position": [
+        1480,
+        -800
+      ],
+      "id": "8e231a80-c67f-401d-bf27-895fa06fd036",
+      "name": "Feishu Node",
+      "credentials": {
+        "feishuCredentialsApi": {
+          "id": "xXMbJlolIl6fcHfz",
+          "name": "Feishu测试号"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "import json\n\ndef escape_newlines(text):\n    \"\"\"转义字符串中的换行符\"\"\"\n    return text.replace('\\n', '\\\\n').replace('\\r', '\\\\r')\n\n# Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor item in _input.all():\n    # 遍历JSON对象的所有键值对\n    for key, value in item.json.items():\n        # 如果值是字符串，则转义换行符\n        if isinstance(value, str):\n            item.json[key] = escape_newlines(value)\nreturn _input.all()\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1260,
+        -800
+      ],
+      "id": "370b2391-7bf3-4993-a94f-b80fa1daa3fd",
+      "name": "Code"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "xAI Grok Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "大模型:翻译",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "定时触发器": {
+      "main": [
+        [
+          {
+            "node": "拉取:纽约时报RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "拉取:BBC RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "大模型:翻译": {
+      "main": [
+        [
+          {
+            "node": "整理:表格数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "限制:最新10条": {
+      "main": [
+        [
+          {
+            "node": "大模型:翻译",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "排序:时间最新": {
+      "main": [
+        [
+          {
+            "node": "限制:最新10条",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "合并": {
+      "main": [
+        [
+          {
+            "node": "排序:时间最新",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "拉取:纽约时报RSS": {
+      "main": [
+        [
+          {
+            "node": "合并",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "拉取:BBC RSS": {
+      "main": [
+        [
+          {
+            "node": "合并",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "整理:表格数据": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Feishu Node",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "426a0b11-8d6b-4175-906f-3809bebcce13",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6d3339a455de9042f2e878a695f7deb5f4532f35c5c36b32185be750c732f184"
+  },
+  "id": "i9bjN1OHJ1f6qF43",
+  "tags": []
+}

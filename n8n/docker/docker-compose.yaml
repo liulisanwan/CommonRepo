@@ -19,6 +19,14 @@ x-n8n: &service-n8n
     # 是否启用诊断和个性化推荐
     - N8N_DIAGNOSTICS_ENABLED=false
     - N8N_PERSONALIZATION_ENABLED=false
+    
+    # 是否在启动时重新安装缺失的包
+    - N8N_REINSTALL_MISSING_PACKAGES=true
+
+    # 是否允许Code节点使用内置模块
+    #- NODE_FUNCTION_ALLOW_BUILTIN=*
+    # 是否允许Code节点使用外部模块
+    #- NODE_FUNCTION_ALLOW_EXTERNAL=*
 
     # (可选)安全性加密密钥
     - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
@@ -94,7 +102,9 @@ services:
       - 5678:5678
     volumes:
       - ./backup:/home/node/backup
-      - ./shared:/data/shared
+
+      # 挂载nodes目录，用于存放自定义节点
+      - ./nodes:~/.n8n/nodes
       # 汉化界面的关键挂载
       - ./dist:/usr/local/lib/node_modules/n8n/node_modules/n8n-editor-ui/dist # 挂载汉化
 

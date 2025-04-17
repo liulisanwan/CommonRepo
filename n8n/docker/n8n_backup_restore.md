@@ -1,7 +1,11 @@
 ##N8N工作流和凭证导入/导出
+踩了个坑，所有工作流和凭证都丢了，于是认真研究了下文档并测试了下，需要注意的是，其实官方的文档也是有出入的：--decrypted参数已经无效了，不需要声明备份文件是否明文。
 首先文档如下：https://docs.n8n.io/hosting/cli-commands/#export-workflows-and-credentials
 
-N8N_ENCRYPTION_KEY必须一致，才能保证导出后能被正常导入(除非使用--backup以明文形式导出)
+最重要一点：**N8N_ENCRYPTION_KEY必须一致**，才能保证导出后能被正常导入(除非使用--backup以明文形式导出)
+
+导出工作流/凭证，可以输出到单个文件，或者目录（目录内分多个文件）
+因此导入，也需要区分是导入文件还是目录。而这里区分的核心参数是--separate
 
 ### 导出所有工作流和凭证到文件workflows和credentials
 ```
@@ -12,7 +16,6 @@ sudo docker compose exec n8n n8n export:credentials --all --output=/home/node/ba
 ```
 n8n import:credentials --input=/home/node/backup/credentials && n8n import:workflow --input=/home/node/backup/workflows
 ```
-
 
 ### 导出所有工作流和凭证到文件夹workflows_folder和credentials_folder
 ```
