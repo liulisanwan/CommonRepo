@@ -49,19 +49,6 @@
     },
     {
       "parameters": {
-        "sseEndpoint": "https://mcp-57ca57c7-31c6-4af5.api-inference.modelscope.cn/sse"
-      },
-      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
-      "typeVersion": 1,
-      "position": [
-        940,
-        80
-      ],
-      "id": "861a7158-0c3d-41d7-8b37-7947c4b725af",
-      "name": "MCP:高德地图2"
-    },
-    {
-      "parameters": {
         "sseEndpoint": "https://mcp.amap.com/sse?key=0feedd194c206c90a4a756f5f5b203d6"
       },
       "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
@@ -118,11 +105,6 @@
         ]
       ]
     },
-    "MCP:高德地图2": {
-      "ai_tool": [
-        []
-      ]
-    },
     "MCP:Amap Tool": {
       "ai_tool": [
         [
@@ -150,7 +132,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "ccc9d32a-4cd0-4d40-9189-f3d6df39184e",
+  "versionId": "eed5f79a-21fe-4baa-b63a-fe1a5039c0b5",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "6d3339a455de9042f2e878a695f7deb5f4532f35c5c36b32185be750c732f184"
