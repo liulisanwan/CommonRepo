@@ -1,0 +1,296 @@
+{
+  "name": "社区节点: MCP Client",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -660,
+        -140
+      ],
+      "id": "1e749271-43c5-4761-b720-bc8dd83f8b25",
+      "name": "When chat message received",
+      "webhookId": "cc6c43de-8b35-4203-919e-1dc792f18c48"
+    },
+    {
+      "parameters": {
+        "connectionType": "sse",
+        "operation": "executeTool",
+        "toolName": "=maps_geo",
+        "toolParameters": "={ \"address\": \"{{ $('抽取起点/终点').item.json.output.from }}\", \"city\":\"成都市\"}"
+      },
+      "type": "n8n-nodes-mcp.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        40,
+        -140
+      ],
+      "id": "f79e7ac8-9d30-428e-a2b6-b3ec18644a14",
+      "name": "MCP:获取起点经纬度",
+      "credentials": {
+        "mcpClientSseApi": {
+          "id": "WmS9Jo5RlzxFOuga",
+          "name": "MCP:高德地图"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "connectionType": "sse",
+        "operation": "executeTool",
+        "toolName": "=maps_geo",
+        "toolParameters": "={ \"address\": \"{{ $('抽取起点/终点').item.json.output.to }}\", \"city\":\"成都市\"}"
+      },
+      "type": "n8n-nodes-mcp.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        220,
+        -140
+      ],
+      "id": "a66a6390-d7b0-49c4-9999-41bcd0491a2d",
+      "name": "MCP:获取终点经纬度",
+      "credentials": {
+        "mcpClientSseApi": {
+          "id": "WmS9Jo5RlzxFOuga",
+          "name": "MCP:高德地图"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "connectionType": "sse"
+      },
+      "type": "n8n-nodes-mcp.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        -140
+      ],
+      "id": "f718da44-2fcf-4b66-8cc5-729d6af36715",
+      "name": "MCP:Amap Tool",
+      "credentials": {
+        "mcpClientSseApi": {
+          "id": "WmS9Jo5RlzxFOuga",
+          "name": "MCP:高德地图"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "text": "={{ $('MCP:获取起点经纬度').item.json.result.content[0].text }}|{{ $json.result.content[0].text }}",
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\n  \"from\" :{\n    \"province\": \"四川省\",\n    \"city\": \"成都市\",\n\t\"location\": \"104.065861,30.657401\"},\n  \"to\" :{\n    \"province\": \"四川省\",\n    \"city\": \"成都市\",\n\t\"location\": \"104.065861,30.657401\"}\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1,
+      "position": [
+        380,
+        -140
+      ],
+      "id": "3df1c68f-3e91-45db-8d98-234642ef72f3",
+      "name": "提取起点经纬度"
+    },
+    {
+      "parameters": {
+        "connectionType": "sse",
+        "operation": "executeTool",
+        "toolName": "=maps_bicycling",
+        "toolParameters": "={ \"origin\": \"{{ $json.output.from.location }}\", \"destination\":\"{{ $json.output.to.location }}\"}"
+      },
+      "type": "n8n-nodes-mcp.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        700,
+        -140
+      ],
+      "id": "d17cc23f-8316-4f87-b775-24e2dd2f6834",
+      "name": "MCP:导航",
+      "credentials": {
+        "mcpClientSseApi": {
+          "id": "WmS9Jo5RlzxFOuga",
+          "name": "MCP:高德地图"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chunkingMode": "advanced",
+        "options": {
+          "summarizationMethodAndPrompts": {
+            "values": {
+              "summarizationMethod": "stuff",
+              "prompt": "用中文整理骑行路线，需要说明起点和终点\n\"{text}\"\n"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainSummarization",
+      "typeVersion": 2,
+      "position": [
+        880,
+        -140
+      ],
+      "id": "e6587cda-74c6-408c-9eb6-9e53795996f5",
+      "name": "整理并输出"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "Pro/deepseek-ai/DeepSeek-V3",
+          "mode": "list",
+          "cachedResultName": "Pro/deepseek-ai/DeepSeek-V3"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        20,
+        100
+      ],
+      "id": "4e66f8f2-dfda-478a-bd29-28ebde13b80a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "XThOsUMK75kBb1n7",
+          "name": "OneHub"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.chatInput }}",
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\n\t\"from\": \"California\",\n\t\"to\": \"Los Angeles\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        -140
+      ],
+      "id": "001c8cf7-d478-4820-abc9-587590e8e15e",
+      "name": "抽取起点/终点"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "抽取起点/终点",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP:获取起点经纬度": {
+      "main": [
+        [
+          {
+            "node": "MCP:获取终点经纬度",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP:获取终点经纬度": {
+      "main": [
+        [
+          {
+            "node": "提取起点经纬度",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP:Amap Tool": {
+      "main": [
+        [
+          {
+            "node": "MCP:获取起点经纬度",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "提取起点经纬度": {
+      "main": [
+        [
+          {
+            "node": "MCP:导航",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP:导航": {
+      "main": [
+        [
+          {
+            "node": "整理并输出",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "抽取起点/终点",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "提取起点经纬度",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "整理并输出",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "抽取起点/终点": {
+      "main": [
+        [
+          {
+            "node": "MCP:Amap Tool",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "01f43197-69df-4331-b171-d672a42e9398",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6d3339a455de9042f2e878a695f7deb5f4532f35c5c36b32185be750c732f184"
+  },
+  "id": "2xiRDJuO5rvKNdgg",
+  "tags": []
+}

@@ -1,0 +1,247 @@
+{
+  "name": "社区MCP高德",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "acf9e7f9-c637-4634-b7e2-a2a78ad07579",
+      "name": "When chat message received",
+      "webhookId": "29d66e26-20f4-4645-a7df-ffe1ba83a2c0"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=目前北京时间：{{ new Date().toLocaleString('zh-CN') }}。\n在使用工具之前，你必须先尝试找出你可以使用的工具。\n对于复杂的任务，你必须制定一个逐步执行的计划，并在每次迭代中检查工具集，然后执行，直到你成功完成整个任务。\n- 使用高德地图（Amap-map）进行天气预报和地图服务。\t\n- 使用MiniMax的文本转语音功能来创建语音播报，或者通过提示词生成图像。",
+          "maxIterations": 10
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        280,
+        0
+      ],
+      "id": "11429d66-c76f-4671-b205-05490a21cb93",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "connectionType": "sse",
+        "operation": "executeTool",
+        "toolName": "={{ $fromAI(\"tool\") }}",
+        "toolParameters": "={{$fromAI(\"Tool_Parameters\",``, 'json')}}"
+      },
+      "type": "n8n-nodes-mcp.mcpClientTool",
+      "typeVersion": 1,
+      "position": [
+        280,
+        220
+      ],
+      "id": "5e2aa40a-9a39-496f-8c3c-078ba07d1ea2",
+      "name": "Amap-maps Execute",
+      "credentials": {
+        "mcpClientSseApi": {
+          "id": "WmS9Jo5RlzxFOuga",
+          "name": "MCP:高德地图"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "获取Amap-map的可用工具集",
+        "connectionType": "sse"
+      },
+      "type": "n8n-nodes-mcp.mcpClientTool",
+      "typeVersion": 1,
+      "position": [
+        460,
+        220
+      ],
+      "id": "32532321-ec28-47eb-a01e-2af4376947e5",
+      "name": "Amap-maps Tool",
+      "credentials": {
+        "mcpClientSseApi": {
+          "id": "WmS9Jo5RlzxFOuga",
+          "name": "MCP:高德地图"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "connectionType": "sse"
+      },
+      "type": "n8n-nodes-mcp.mcpClientTool",
+      "typeVersion": 1,
+      "position": [
+        600,
+        220
+      ],
+      "id": "c367fc0b-60e3-4d1c-908d-4b24c1c01f0b",
+      "name": "MiniMax Tool",
+      "credentials": {
+        "mcpClientSseApi": {
+          "id": "epUW1kQde8kwa77b",
+          "name": "MCP:MiniMax"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "connectionType": "sse",
+        "operation": "executeTool",
+        "toolName": "={{ $fromAI(\"tool\") }}",
+        "toolParameters": "={{$fromAI(\"Tool_Parameters\",``, 'json')}}"
+      },
+      "type": "n8n-nodes-mcp.mcpClientTool",
+      "typeVersion": 1,
+      "position": [
+        740,
+        220
+      ],
+      "id": "cc4845cf-5490-43bf-b4bd-6616a7a8906d",
+      "name": "MiniMax Execute",
+      "credentials": {
+        "mcpClientSseApi": {
+          "id": "epUW1kQde8kwa77b",
+          "name": "MCP:MiniMax"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        220
+      ],
+      "id": "6dd1efe1-fb4b-4e99-9e53-0c0cd6d69b88",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4.1-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -100,
+        220
+      ],
+      "id": "e24015ab-19df-436d-8805-a34baa2096be",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "lo6umqKV2VIyOzLb",
+          "name": "OpenRouter account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Amap-maps Execute": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Amap-maps Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MiniMax Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MiniMax Execute": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0ae95a14-9636-4d06-a3a6-c0c518f70f89",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6d3339a455de9042f2e878a695f7deb5f4532f35c5c36b32185be750c732f184"
+  },
+  "id": "MlAhDCGN7Mvm4Qiy",
+  "tags": []
+}
