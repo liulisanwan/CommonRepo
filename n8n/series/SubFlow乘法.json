@@ -1,0 +1,63 @@
+{
+  "name": "SubFlow: 乘法",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"num1\": 1234,\n  \"num2\": 1234\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a825d01c-60cb-4ad4-947d-b380242414b4",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "$input.item.json.sum = ($input.item.json?.num1 ?? 0) * ($input.item.json?.num2 ?? 0);\n\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "6bb78da6-e929-4687-bf01-fc5355b58507",
+      "name": "Code:乘法"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Code:乘法",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code:乘法": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3e56750d-44f3-4f91-8eab-315241a382c4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6d3339a455de9042f2e878a695f7deb5f4532f35c5c36b32185be750c732f184"
+  },
+  "id": "svnAhhdWf0VQFKEj",
+  "tags": []
+}

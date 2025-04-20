@@ -1,0 +1,63 @@
+{
+  "name": "SubFlow: 加法",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"num1\": 1234,\n  \"num2\": 1234\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2b71699e-44ea-46de-ac9d-2b0b87ad254f",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "$input.item.json.sum = ($input.item.json?.num1 ?? 0) + ($input.item.json?.num2 ?? 0);\n\nreturn $input.item;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "f6cb2632-c2ae-4062-a906-a38ecc9b9907",
+      "name": "Code:加法"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Code:加法",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code:加法": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "db0a317e-121b-4c14-ab88-0c32ee67052a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6d3339a455de9042f2e878a695f7deb5f4532f35c5c36b32185be750c732f184"
+  },
+  "id": "7rc5OeZVf1NgP8Fd",
+  "tags": []
+}

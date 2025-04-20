@@ -1,0 +1,89 @@
+{
+  "name": "SubFlow: 翻译",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"content\": \"Hello World. \",\n  \"language\": \"法语\"\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "031206b4-dc85-4f29-a1d7-e564693ffbf4",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "model": "grok-3-beta",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        180,
+        180
+      ],
+      "id": "1c878966-ed5e-4f62-8620-b5cbefb862b4",
+      "name": "xAI Grok Chat Model",
+      "credentials": {
+        "xAiApi": {
+          "id": "cH0ILaofgvd2SGW1",
+          "name": "xAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=你是个翻译专家，会把 内容：{{ $json.content }}，翻译成语言：{{ $json.language }}。 只输出翻译后内容，不输出其他信息"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        220,
+        0
+      ],
+      "id": "acf53874-69f4-428d-902b-61ad8dfa94ee",
+      "name": "多语言翻译"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "多语言翻译",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI Grok Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "多语言翻译",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bb2c3de8-f28e-4b25-a620-036f1bd123db",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6d3339a455de9042f2e878a695f7deb5f4532f35c5c36b32185be750c732f184"
+  },
+  "id": "E88FuwvJfSfnj5Pa",
+  "tags": []
+}

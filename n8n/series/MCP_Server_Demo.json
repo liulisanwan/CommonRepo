@@ -1,0 +1,216 @@
+{
+  "name": "MCP Server Demo",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "Labs"
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1360,
+        -280
+      ],
+      "id": "568bc0ad-7021-4cad-9b3e-a72c072b3b5a",
+      "name": "MCP Server Trigger",
+      "webhookId": "7770335d-0491-4c83-9d02-fe9c9abfd4c2"
+    },
+    {
+      "parameters": {
+        "name": "Plus",
+        "workflowId": {
+          "__rl": true,
+          "value": "7rc5OeZVf1NgP8Fd",
+          "mode": "list",
+          "cachedResultName": "SubFlow: 加法"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "num2": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('num2', ``, 'number') }}",
+            "num1": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('num1', ``, 'number') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "num1",
+              "displayName": "num1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "num2",
+              "displayName": "num2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.1,
+      "position": [
+        -1340,
+        -60
+      ],
+      "id": "85311bc4-9063-40f7-87c3-fe581726150b",
+      "name": "SubFlow:加法"
+    },
+    {
+      "parameters": {
+        "name": "Translate",
+        "workflowId": {
+          "__rl": true,
+          "value": "E88FuwvJfSfnj5Pa",
+          "mode": "list",
+          "cachedResultName": "SubFlow: 翻译"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('content', ``, 'string') }}",
+            "language": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('language', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "language",
+              "displayName": "language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.1,
+      "position": [
+        -1180,
+        -60
+      ],
+      "id": "516f13ad-1adf-40f2-88ce-b52dbe88b9dc",
+      "name": "SubFlow:翻译"
+    },
+    {
+      "parameters": {
+        "name": "Multiply",
+        "workflowId": {
+          "__rl": true,
+          "value": "svnAhhdWf0VQFKEj",
+          "mode": "list",
+          "cachedResultName": "SubFlow: 乘法"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "num2": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('num2', ``, 'number') }}",
+            "num1": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('num1', ``, 'number') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "num1",
+              "displayName": "num1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "num2",
+              "displayName": "num2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.1,
+      "position": [
+        -1020,
+        -60
+      ],
+      "id": "9255168f-9dde-42a6-a9b3-8b5736afc497",
+      "name": "SubFlow:乘法"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "SubFlow:加法": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SubFlow:翻译": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SubFlow:乘法": {
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Server Trigger",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "73361b1e-7906-40fa-8e80-9ab7f629ac58",
+  "meta": {
+    "instanceId": "6d3339a455de9042f2e878a695f7deb5f4532f35c5c36b32185be750c732f184"
+  },
+  "id": "PvMhtqLdtFbmrqWH",
+  "tags": []
+}
