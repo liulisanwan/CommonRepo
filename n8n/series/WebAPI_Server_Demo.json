@@ -1,0 +1,454 @@
+{
+  "name": "WebAPI Server Demo",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.method }}",
+                    "rightValue": "Multiply",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "84f3562a-1e3c-4e20-8601-ec3d2a5f3dc5"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "386544cc-7346-40e8-ab6f-906c2ad8f796",
+                    "leftValue": "={{ $json.body.method }}",
+                    "rightValue": "Plus",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1640,
+        -280
+      ],
+      "id": "2badeb10-f849-4eab-b649-243e8d5884fe",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "7rc5OeZVf1NgP8Fd",
+          "mode": "list",
+          "cachedResultName": "SubFlow: 加法"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "num2": "={{ $json.body.num2 }}",
+            "num1": "={{ $json.body.num1 }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "num1",
+              "displayName": "num1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "num2",
+              "displayName": "num2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1420,
+        -200
+      ],
+      "id": "68d31307-fb95-4b70-bba6-17257f2d5077",
+      "name": "调用子流程：加法"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query.question }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -1680,
+        260
+      ],
+      "id": "bf013f78-2f82-48d1-a1ac-0b44571f0188",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        380
+      ],
+      "id": "f3d8c349-7dd4-4abb-82f6-7522c6a3ff3f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "gLrIWVxIlrS40xWx",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ new Date().toLocaleString('zh-CN') + \": \" + $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -1360,
+        260
+      ],
+      "id": "a5bc65d1-1165-494d-b497-45febc7597ff",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "path": "Labs",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1860,
+        20
+      ],
+      "id": "b449e60b-42be-49ce-8f63-e9a2ab6ad0d1",
+      "name": "Webhook: Get: Labs",
+      "webhookId": "a6db53d9-5d9e-48fe-ab4d-f0fb9f7b4386"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "Labs",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1860,
+        -280
+      ],
+      "id": "96b83520-2612-4b6b-ac87-702864dd20be",
+      "name": "Webhook:Post: Labs",
+      "webhookId": "c0b160c2-07aa-424e-a003-37294e5b5a03"
+    },
+    {
+      "parameters": {
+        "content": "POST方法，BODY为JSON数据，路径Labs，使用method字段做分支判定",
+        "height": 360,
+        "width": 760,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1960,
+        -400
+      ],
+      "id": "58286176-f8c0-4ea8-8028-7023caee9e3d",
+      "name": "Sticky Note",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "GET方法，路径Labs，使用num1和num2两个参数",
+        "height": 200,
+        "width": 760
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1960,
+        -20
+      ],
+      "id": "9d9f06f2-c71c-4cf7-86b2-ee91f49bcda5",
+      "name": "Sticky Note1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "Get方法，路径Labs/Chat，参数Question",
+        "height": 320,
+        "width": 760
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1960,
+        200
+      ],
+      "id": "c4792472-7875-4642-a716-19b36f1ed143",
+      "name": "Sticky Note2",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "path": "Labs/Chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1860,
+        260
+      ],
+      "id": "6559a1b3-a7fa-4eb6-b152-0ce7337ce709",
+      "name": "Webhook: Get: AILabs",
+      "webhookId": "a6db53d9-5d9e-48fe-ab4d-f0fb9f7b4386"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "E88FuwvJfSfnj5Pa",
+          "mode": "list",
+          "cachedResultName": "SubFlow: 翻译"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "content": "={{ $json.query.content }}",
+            "language": "={{ $json.query.language }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "language",
+              "displayName": "language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": true,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1420,
+        20
+      ],
+      "id": "7bb6bbc7-8bee-4734-95cf-8492297911b0",
+      "name": "调用子流程：翻译"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "svnAhhdWf0VQFKEj",
+          "mode": "list",
+          "cachedResultName": "SubFlow: 乘法"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "num2": "={{ $json.body.num2 }}",
+            "num1": "={{ $json.body.num1 }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "num1",
+              "displayName": "num1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "num2",
+              "displayName": "num2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -1420,
+        -380
+      ],
+      "id": "b50b3e85-9f5f-48cb-8c9e-fda49dc94bd5",
+      "name": "调用子流程：乘法"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "调用子流程：乘法",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "调用子流程：加法",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Get: Labs": {
+      "main": [
+        [
+          {
+            "node": "调用子流程：翻译",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook:Post: Labs": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Get: AILabs": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9850b5d3-a67a-4a5f-aad6-bb770e36a8ed",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6d3339a455de9042f2e878a695f7deb5f4532f35c5c36b32185be750c732f184"
+  },
+  "id": "FJShRs5l1T3ldwUx",
+  "tags": []
+}
