@@ -102,9 +102,6 @@ services:
       - 5678:5678
     volumes:
       - ./backup:/home/node/backup
-
-      # 挂载nodes目录，用于存放自定义节点
-      - ./nodes:~/.n8n/nodes
       # 汉化界面的关键挂载
       - ./dist:/usr/local/lib/node_modules/n8n/node_modules/n8n-editor-ui/dist # 挂载汉化
 
