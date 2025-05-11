@@ -1,0 +1,672 @@
+{
+  "name": "SubFlow-Web2RSS",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "llama-3.3-70b",
+          "mode": "list",
+          "cachedResultName": "llama-3.3-70b"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        740
+      ],
+      "id": "87836199-3fff-4ab3-9637-b5c2871c124a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "XThOsUMK75kBb1n7",
+          "name": "OneHub"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "numberOfItems": -1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserItemList",
+      "typeVersion": 1,
+      "position": [
+        140,
+        740
+      ],
+      "id": "c6ea9f63-a8af-4754-9207-66a0b2df77ba",
+      "name": "Item List Output Parser"
+    },
+    {
+      "parameters": {
+        "resource": "Default",
+        "operation": "Scrape A Url And Get Its Content",
+        "url": "={{ $json.text.parseJson().link }}",
+        "formats": [
+          "markdown"
+        ],
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-firecrawl.fireCrawl",
+      "typeVersion": 1,
+      "position": [
+        940,
+        700
+      ],
+      "id": "10689837-a2a3-4dd8-942d-c709569ad437",
+      "name": "FireCrawl",
+      "retryOnFail": true,
+      "credentials": {
+        "fireCrawlApi": {
+          "id": "0to9BtFFwoffmlMu",
+          "name": "FireCrawl account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "抽取文章正文内容, 正文1000字以内抽取200字左右，正文1000字以上上的抽取20%左右"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        1120,
+        400
+      ],
+      "id": "143e6e9f-82af-415a-905a-29c8e0caaa8b",
+      "name": "尝试从HTTP Get获取的HTML抽取正文"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data.markdown }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "抽取文章正文内容, 正文1000字以内抽取200字左右，正文1000字以上上的抽取20%左右"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        1120,
+        700
+      ],
+      "id": "f4cf5ee7-81c5-4b38-b83f-f9bdcd016067",
+      "name": "从Firecrawl获取的Markdown提取正文",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1520,
+        540
+      ],
+      "id": "dfc603d0-38d4-4806-9c96-842476e9c2d6",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "resource": "Default",
+        "operation": "Scrape A Url And Get Its Content",
+        "url": "={{ $json.url }}",
+        "formats": [
+          "markdown"
+        ],
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-firecrawl.fireCrawl",
+      "typeVersion": 1,
+      "position": [
+        -260,
+        520
+      ],
+      "id": "340ec3bd-9756-4691-a5c4-2bcb735e8f24",
+      "name": "抓取目标页",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "fireCrawlApi": {
+          "id": "0to9BtFFwoffmlMu",
+          "name": "FireCrawl account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.text.parseJson().link }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        400
+      ],
+      "id": "de65938a-621c-4728-a0dc-dcf65aab96b7",
+      "name": "简单Request获取",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b614b737-06a4-483b-8ed8-bb4dfcdeaf52",
+              "leftValue": "={{ new Date($json.text.parseJson().date).getTime() }}",
+              "rightValue": "={{ $('调用入口').item.json.fromdate }}",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        300,
+        520
+      ],
+      "id": "555e9482-5a06-445b-bfce-4532e90b110f",
+      "name": "Filter",
+      "retryOnFail": true,
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"url\": \"a url string\",\n  \"fromdate\": 1746773936595,\n  \"mode\": \"request/crawl\"\n}"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -460,
+        520
+      ],
+      "id": "e990fb24-20be-4930-ba21-519927116695",
+      "name": "调用入口"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n   \"content\": \"正文内容...\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1280,
+        580
+      ],
+      "id": "aa53989f-e032-4986-a858-95ba337b50bf",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8bb643f6-1492-487b-85d1-7c0cf71c00fc",
+              "leftValue": "={{ $('调用入口').item.json.mode }}",
+              "rightValue": "request",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        760,
+        540
+      ],
+      "id": "d9fe3159-f591-47a7-a151-914301a72b47",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        760,
+        720
+      ],
+      "id": "a58a6649-ce07-478a-aea5-95251e8043ce",
+      "name": "Wait",
+      "webhookId": "ce346e52-9822-4fa3-90b4-e9acfad81bab",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "model": "grok-3-beta",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatXAiGrok",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        580
+      ],
+      "id": "dd014709-d341-4cef-a238-01bf59653d9d",
+      "name": "xAI Grok Chat Model",
+      "credentials": {
+        "xAiApi": {
+          "id": "cH0ILaofgvd2SGW1",
+          "name": "xAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data.markdown }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "把输入的内容整理成标准Json输出，仅包含正文本身，不输入任何其他内容（包括```这样的标头）\n处理内容时需要注意特殊字符的处理，避免JSON格式被打乱\n一条记录应有title, link, 以及date字段（中文按UTC+8区，如果不确定时间，一律按中午12:00），参考以下格式，禁止使用/n等换行符转义字符\n{\"title\": \"青年早新闻｜全国首例！抢票“外挂”软件被判构成不正当竞争\",\"link\":\"http://m.cyol.com/gb/baobao/articles/2025-04/28/content_AjMO99Hbyw.html\", \"date\": \"2025-05-07T17:57:30.885+08:00\"}"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -60,
+        520
+      ],
+      "id": "9c4c0f08-b79d-4ea0-a665-a2ffc943472b",
+      "name": "大模型：分析并抽取页面的新闻条",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5
+    },
+    {
+      "parameters": {
+        "content": "## 1.获取并筛选新闻词条",
+        "height": 600,
+        "width": 960,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -540,
+        320
+      ],
+      "id": "23869881-9a89-4d67-a45c-2bc04c5790dc",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## 2. 获取每条新闻内容，并按RSS格式进行汇聚返回",
+        "height": 600,
+        "width": 1560,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        440,
+        320
+      ],
+      "id": "4bdc1f18-488d-4f4f-9baa-902fea9ca801",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a9538297-b88f-40e9-a320-8b28effc3abb",
+              "name": "title",
+              "value": "={{ $('循环').item.json.text.parseJson().title }}",
+              "type": "string"
+            },
+            {
+              "id": "7fe4351b-716a-4b45-bf90-2bdf031792a6",
+              "name": "link",
+              "value": "={{ $('循环').item.json.text.parseJson().link}}",
+              "type": "string"
+            },
+            {
+              "id": "6ec655bb-ee90-4168-8996-9213572e870d",
+              "name": "pubDate",
+              "value": "={{ $('循环').item.json.text.parseJson().date }}",
+              "type": "string"
+            },
+            {
+              "id": "c3a66aed-f49a-4feb-82d0-bc4bb34fcf0d",
+              "name": "content",
+              "value": "={{ $json.output.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "include": "selected",
+        "includeFields": "=",
+        "options": {
+          "dotNotation": false
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1600,
+        720
+      ],
+      "id": "8a2420fa-7a1e-4f72-8134-8fce7809f10d",
+      "name": "重新组织数据结构",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# 检查输入数据是否存在且格式正确\n# 迭代处理列表中的每一个 Item\n# 确保 items 是一个非空的列表\nif items and isinstance(items, list):\n    # 创建一个新的列表来存储处理后的 Item，或者直接修改原列表（当前选择直接修改原列表）\n    # processed_items = [] # 如果需要创建一个新的列表\n\n    # 遍历输入列表中的每一个 Item\n    for i, item in enumerate(items): # 使用 enumerate 可以获取索引，方便调试或引用\n        # 确保当前 item 是一个字典\n        if isinstance(item, dict):\n            # 1. 检查并提取 'content' 的值\n            # 确保 'content' 键存在且其值是字符串\n            if 'content' in item and isinstance(item['content'], str):\n                original_content = item['content']\n\n                # 清理常见空白符，转换为JSON安全的转义序列（这部分原代码已做，保留）\n                # 注意：这些字符 (\\n, \\t, \\r) 在JSON字符串值中是需要转义的。\n                # Python字符串字面量中的 \\\\n 会被序列化器正确地输出为 JSON 中的 \\n。\n                # 您的替换逻辑是正确的，它将 Python 字符串中的实际换行符替换为 Python 字符串字面量中的 \"\\n\"\n                # 这等同于将实际换行符转义为 JSON 中的 \\\\n\n                cleaned_content = original_content.replace('\\n', '\\\\n')\n                cleaned_content = cleaned_content.replace('\\t', '\\\\t')\n                cleaned_content = cleaned_content.replace('\\r', '\\\\r')\n\n                # >>> 关键修正: 添加对全角空格的清理 <<<\n                # 全角空格 (U+3000) 在某些解析器中可能导致问题。\n                # 替换为普通半角空格 ' ' 是一个常见的做法。\n                cleaned_content = cleaned_content.replace('　', ' ') # 将全角空格替换为半角空格\n\n                # 你还可以考虑清理其他可能的非打印字符或特定问题字符，如果需要的话。\n                # 例如，如果遇到零宽度字符 U+200B，也可以清理：\n                # cleaned_content = cleaned_content.replace('\\u200b', '')\n\n                # 更新当前 Item 中的 'content' 键的值（直接修改原列表中的字典）\n                item['content'] = cleaned_content\n                # processed_items.append(item) # 如果是创建新列表则添加到这里\n\n            else:\n                # 如果当前 item 没有 content 键或者 content 不是字符串，打印警告并跳过处理\n                # 当前 item 将保持原样\n                # 使用 get('title', 'Untitled Item') 提供更多上下文\n                print(f\"Warning: Item at index {i} ('{item.get('title', 'Untitled Item')}') has no 'content' key or its value is not a string. Skipping content cleaning for this item.\")\n                # processed_items.append(item) # 如果是创建新列表则添加到这里（保持原样）\n\n        else:\n            # 如果列表中的某个元素不是字典，打印警告并跳过\n            print(f\"Warning: Item at index {i} is not a dictionary. Skipping this element: {item}\")\n            # 如果是创建新列表，可能需要决定是否包含这个非字典元素\n            # processed_items.append(item) # 或者直接忽略，取决于下游需求\n\n    # 如果是创建新列表，则更新 items 变量\n    # items = processed_items\n\nelse:\n    # 如果输入不是预期的格式（例如 items 为空或不是列表），打印警告\n    print(\"Warning: Input 'items' is empty or not a list. No processing performed.\")\n    # 在这种情况下，items 变量保持原样。如果下游节点依赖于特定格式，这可能会导致错误。\n    # 考虑在这里将 items 设置为 [] 以避免下游问题，但通常保留原样以便调试输入。\n    # items = []\n\n# Python Code 节点要求显式地返回处理后的 Item 列表。\n# 即使我们已经在上面修改了 items 列表，也必须使用 return 将它传递出去。\nreturn items\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1740,
+        540
+      ],
+      "id": "0a50737e-c110-4418-a0e1-8777d0e8e959",
+      "name": "去掉特殊字符"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        560,
+        520
+      ],
+      "id": "6433d2bb-dbbc-4cf4-96a1-15aec576049d",
+      "name": "循环"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "大模型：分析并抽取页面的新闻条",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Item List Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "大模型：分析并抽取页面的新闻条",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FireCrawl": {
+      "main": [
+        [
+          {
+            "node": "从Firecrawl获取的Markdown提取正文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "尝试从HTTP Get获取的HTML抽取正文": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "从Firecrawl获取的Markdown提取正文": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "去掉特殊字符",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "抓取目标页": {
+      "main": [
+        [
+          {
+            "node": "大模型：分析并抽取页面的新闻条",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "简单Request获取": {
+      "main": [
+        [
+          {
+            "node": "尝试从HTTP Get获取的HTML抽取正文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "循环",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "调用入口": {
+      "main": [
+        [
+          {
+            "node": "抓取目标页",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "尝试从HTTP Get获取的HTML抽取正文",
+            "type": "ai_outputParser",
+            "index": 0
+          },
+          {
+            "node": "从Firecrawl获取的Markdown提取正文",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "简单Request获取",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "FireCrawl",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "循环",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "xAI Grok Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "尝试从HTTP Get获取的HTML抽取正文",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "从Firecrawl获取的Markdown提取正文",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "大模型：分析并抽取页面的新闻条": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "重新组织数据结构": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "去掉特殊字符": {
+      "main": [
+        [
+          {
+            "node": "重新组织数据结构",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "循环": {
+      "main": [
+        [],
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9bcd24e5-8fb6-4547-9c06-4aa38a567c4f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6d3339a455de9042f2e878a695f7deb5f4532f35c5c36b32185be750c732f184"
+  },
+  "id": "zoURqywBmlxWLSSN",
+  "tags": []
+}
