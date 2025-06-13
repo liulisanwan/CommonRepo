@@ -1,0 +1,513 @@
+{
+  "name": "n8n2API(No memory)",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {
+          "allowFileUploads": true
+        }
+      },
+      "id": "9768a023-d488-4cdf-8407-5a0b187c4073",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        1100,
+        300
+      ],
+      "webhookId": "f24f59f8-7ea5-4165-be02-d47bdcae52fa",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "path": "v1/models",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f0f3f61a-c056-48d6-bc3c-027bb717687f",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        1880,
+        300
+      ],
+      "webhookId": "211b7574-f96a-429e-a2bf-c19c0fec5e9e",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "url": "https://api.72live.com/v1/models",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-5VQCZoDjCOeyLwB_wAAX_6YORuTLg_klcd5IlOFOfTdgNDn0CVaZaItPjvE"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aee1cb92-7fd5-4f3a-923a-a953fec33d6f",
+      "name": "OpenAI Models",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        2100,
+        300
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "v1/chat/completions",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "8c8cda9e-3009-43df-86af-6f10dad15c23",
+      "name": "POST ChatCompletions",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        1100,
+        940
+      ],
+      "webhookId": "e8c56164-1825-4ac4-9c23-d209f4907458",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// === Code 节点代码: 版本 B ===\n// 沿用你原来的函数定义\nfunction tranformContent(content) {\n // 安全处理: 如果 content 是 null 或 undefined，返回空数组\n  if (content == null) return [];\n  \n  // 兼容 content 是 string 和 content 是 [{type:\"text\", text:\"\"}, {type:\"image_url\",...}] 的情况\n  const contentArray = [].concat(content);\n\n  return contentArray.map(item => {\n     // 如果传入的 content 是 \"string\" 或数组元素是 \"string\"\n    if (typeof item === 'string') {\n      return { type: \"input_text\", text: item };\n    }\n     // 如果 content 已经是对象 {type:..., text:...} 或 {type: 'image_url', image_url: {url:..}}\n     if(typeof item === 'object' && item !== null && item.type){\n        // 处理文本\n        if(item.type === 'text'){\n            return { type: \"input_text\", text: item.text || \"\" };\n        }\n        // 处理图片 (注意：你的原始逻辑里 item.type === 'image_url' 时的 key 拼装, 确保目标API接受！)\n        // 原始逻辑： { type: getInputType(item.type), [item.type]: item[item.type].url }\n        // 如果 item = { type: 'image_url', image_url: { url: 'http..' } }\n        // 结果是： { type: 'input_image', 'image_url': 'http..' } <-- 确认这是目标API要的格式\n         if(item.type === 'image_url' && item.image_url?.url){\n             return { type: getInputType(item.type), [item.type]: item[item.type].url  } // 保持你的逻辑\n         }\n        // 增加其他类型的处理或返回空/默认\n         return { type: \"input_text\", text: `[Unsupported content type: ${item.type}]`}; //或过滤掉 filter\n\n     }\n    return null; // 无效项\n  }).filter(Boolean); // 过滤掉 null 项\n\n};\n\n// 沿用\nfunction getInputType(type) {\n  if (type === 'image_url') return 'input_image';\n  if (type === 'file_url') return 'input_file';\n   // OpenAI standard client uses \"text\", map it to your target \"input_text\"\n  if (type === 'text') return 'input_text'; \n  return 'input_text';\n}\n\n\n// --- 核心修改从这里开始 ---\n\n// 假设输入数据来自上一个节点 (Webhook 节点)\n// 请从左侧 Input 面板拖拽确认 $input.item.json.body 的路径正确\nconst requestBody = $input.item.json.body; \n\n // 增加安全性检查\nif (!requestBody) {\n  return { model: null, messages: [], stream: false, error: \"Request body missing\" };\n}\nconst originalMessages = requestBody.messages || [];\n\n// 使用你的 map 逻辑，但变量名改为 finalMessages\nconst finalMessages = originalMessages.map(message => ({\n  role: message.role,\n  content: tranformContent(message.content) // 使用你原来的转换函数\n}));\n\n// !!! 关键修改： 返回 HTTP Request 节点所需的完整结构 !!!\n// 而不是 return { input };\nreturn { \n   model: requestBody.model,\n   messages: finalMessages, // 键名是 messages, 不是 input\n   stream: requestBody.stream === true, // 确保是 boolean\n};\n"
+      },
+      "id": "6cfff2ab-ea1e-46a1-b6ac-c44c66efb261",
+      "name": "Remap to Response API Schema",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1320,
+        940
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.72live.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-5VQCZoDjCOeyLwB_wAAX_6YORuTLg_klcd5IlOFOfTdgNDn0CVaZaItPjvE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $json.model }}\", \n  \"messages\": {{ JSON.stringify($json.messages) }},\n  \"stream\": {{ $json.stream }}\n}",
+        "options": {}
+      },
+      "id": "ee717a86-4c1a-483f-a153-4dcef944bd7c",
+      "name": "OpenAI Responses API",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1540,
+        940
+      ],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "gemini-2.0-flash"
+        },
+        "options": {}
+      },
+      "id": "4f70558e-fc48-486e-8d0f-285e8574e58a",
+      "name": "n8n Webhook",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        1280,
+        500
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "XThOsUMK75kBb1n7",
+          "name": "OneHub"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 1. 创建新的自定义OpenAI凭证\n要在现有n8n节点中使用大模型，一种方法是模拟通过OpenAI模型子节点连接的兼容API。听起来复杂但别担心，本模板将展示具体操作！第一步是设置新的OpenAI凭证，以便我们能修改基础URL。",
+        "height": 580,
+        "width": 700,
+        "color": 7
+      },
+      "id": "c3a2bed1-4d14-4168-9876-ed2ca1b772f9",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1020,
+        60
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 2. 列出所有可用模型  \n[详细了解Webhook触发器节点](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/)  \n\n我们的第一个端点用于列出所有模型，这里实现是通过调用第三方大模型API展示了如何实现这一点，实际应用可以把模型类型作为子流程的切换参数",
+        "height": 580,
+        "width": 800,
+        "color": 7
+      },
+      "id": "d255bec2-66a2-4ead-b8e0-9099f08c3d78",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1760,
+        60
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// 此时 $json 直接就是那个对象: { \"id\": \"...\", choices: [...], usage: {...} }\n// 我们直接把 $json 赋值给 data, 并做简单判空\nconst data = $json; \n\n// 如果输入项本身就是 null 或 undefined\nif (!data) {\n  // 可以返回错误，或者返回一个空结构，视乎你需要平台如何处理空项\n\treturn { error: \"Input item is null or undefined\" }; \n }\n \n // 增加安全判断，防止 data.choices 或 data.usage 不存在时报错\n const choices = data.choices || [];\n const usage = data.usage || {};\n const message = (choices[0] || {}).message || {}; // 更安全的获取message\n\n// 直接基于 data (即 $json) 来构建返回结构\nreturn {\n  \"id\": data.id, \n  \"object\": data.object, // 使用 data.object\n  \"created\": data.created, // 匹配输入字段 created\n  \"model\": data.model, \n   // 重点修改 choices 映射逻辑\n   \"choices\": choices.map((item, idx) => ({\n       index: item.index, \n       finish_reason: item.finish_reason,\n      \"message\": {\n        \"annotations\": undefined, // 输入结构中没有\n         // 安全访问 item.message.content\n        \"content\": item.message ? item.message.content : undefined,\n        \"refusal\": null,\n         // 安全访问 item.message.role\n        \"role\": item.message ? item.message.role : undefined\n      }\n    })\n  ),\n   // 重点修改 usage 映射逻辑，匹配输入字段名\n  \"usage\": {\n    // 使用 completion_tokens 代替 output_tokens\n    \"completion_tokens\": usage.completion_tokens,\n    \"completion_tokens_details\": usage.completion_tokens_details,\n     // 使用 prompt_tokens 代替 input_tokens_details\n    \"prompt_tokens\": usage.prompt_tokens, \n    \"prompt_tokens_details\": usage.prompt_tokens_details,\n    \"total_tokens\": usage.total_tokens\n  },\n   // 输入数据中没有 service_tier\n  \"service_tier\": data.service_tier, \n  \"system_fingerprint\": data.id\n}\n\n"
+      },
+      "id": "5959e1ce-d975-4e67-9cfb-4e4afbf51ac3",
+      "name": "Format Completion Response",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1960,
+        1040
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "content": "## 3. 映射OpenAI响应API，并区分Stream流式和非流式响应\n[了解HTTP请求节点的更多信息](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest)\n",
+        "height": 580,
+        "width": 1540,
+        "color": 7
+      },
+      "id": "98c5989c-1b99-4902-b09e-9193faedd720",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1020,
+        660
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// 假设 HTTP Request 节点将整个上游 SSE 响应体（一个长字符串）输出到了 data 属性\n// 检查你的HTTP Node, 如果是Binary data,路径可能不同, 如 $input.item.binary.myproperty.data\nconst rawStreamString = $input.item.json.data; \n\nif (!rawStreamString) {\n  // 如果没有内容，返回结束信号\n  return { data: \"data: [DONE]\\n\\n\" }; \n}\n\nlet fixedId = null; // 用于存储我们捕获到的第一个ID\n// let fixedCreated = null; // 也可以统一创建时间\nconst outputChunks = [];\n// SSE协议规定块与块之间用 \\n\\n 分隔\nconst chunks = rawStreamString.split('\\n\\n'); \n\n for (const chunkStr of chunks) {\n      const trimmedChunk = chunkStr.trim();\n       // 跳过空块\n       if (!trimmedChunk) continue;\n\n       // 1. 处理结束标记 [DONE]\n       // 注意：有些上游可能不带 data: 前缀，这里保守处理带前缀的\n       if (trimmedChunk === 'data: [DONE]' || trimmedChunk === '[DONE]' ) {\n            outputChunks.push('data: [DONE]'); // 统一输出 data: [DONE]\n            continue; // 处理下一个\n       }\n        \n       // 2. 确保是 data: 开头的数据块\n       if (!trimmedChunk.startsWith('data: ')) {\n            // 不是标准 data: 块或 [DONE]，忽略或原样传递(忽略更安全)\n            // outputChunks.push(trimmedChunk); \n            continue; \n       }\n\n       try {\n           // 提取 \"data: \" 后面的 JSON 字符串\n           const jsonString = trimmedChunk.substring(6).trim(); \n           const dataObj = JSON.parse(jsonString);\n\n           // 检查是否是包含 id 的有效对象\n           if (dataObj && typeof dataObj.id === 'string') {\n                \n               // 如果是第一次遇到 ID, 记录下来作为统一ID\n               if (fixedId === null) {\n                   fixedId = dataObj.id; \n                  // fixedCreated = dataObj.created;\n               }\n              \n               // *** 核心修复: 强制覆盖当前块的 ID 为统一ID ***\n               dataObj.id = fixedId; \n               // dataObj.created = fixedCreated; // 可选: 也统一时间戳\n\n               // 重新序列化修改后的对象，并加上 'data: ' 前缀\n                outputChunks.push('data: ' + JSON.stringify(dataObj));\n\n           } else {\n              // 如果 JSON 对象里没有 id, 可以选择原样传递或忽略\n               outputChunks.push(trimmedChunk); \n           }\n\n       } catch (e) {\n           // JSON 解析失败，忽略此错误块 (或原样传递，但可能导致客户端出错)\n           // console.error(\"Failed to parse chunk: \", trimmedChunk, e);\n            // outputChunks.push(trimmedChunk); // 原样传递有风险\n       }\n  }\n\n // 将所有处理过的块用 \\n\\n 重新连接起来, 并在末尾确保有 \\n\\n\n const finalStreamString = outputChunks.join('\\n\\n') + '\\n\\n';\n\n// 返回 Respond 节点期望的结构\nreturn { \n  data: finalStreamString \n};\n\n"
+      },
+      "id": "020b89f7-4f13-4c89-8666-7c0ec558c6ec",
+      "name": "Format Stream Response",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1960,
+        840
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "content": "## 试试看！\n### 本n8n模板展示了如何将OpenAI的Responses API与现有LLM及AI代理节点结合使用。\n\n虽然我建议等待官方支持，但如果你迫不及待想通过迂回方式将OpenAI的Responses API集成到现有AI工作流中，这个模板绝对能满足需求！\n\n该方法利用n8n内置的webhooks为Responses API实现了一个简单的封装层。通过自定义OpenAI凭证将基础URL指向这些webhooks后，即可拦截请求并重新映射参数以确保兼容性。\n\n### 工作原理\n* 代理节点连接了OpenAI子节点，但使用特殊自定义凭证——其base_url被修改为指向本模板的webhooks\n* 执行查询时，代理请求会被转发到迷你聊天补全工作流\n* 在此我们将标准请求参数重新映射，通过配置好的HTTP节点向Responses API发起查询\n* 收到响应后需再次转换输出格式以确保Langchain兼容性，使LLM或代理节点能解析并响应用户\n* 包含两种响应格式：流式和非流式\n\n### 使用方法\n* 必须激活本工作流才能使用webhooks功能\n* 按说明创建自定义OpenAI凭证\n* 在现有AI工作流中用该凭证替换LLM节点，无需迁移其他内容\n\n### 需求条件\n* 具备Responses API权限的OpenAI账户\n\n### 自定义调整\n* 欢迎用相同技术试验其他LLM！\n* 及时关注Responses API公告并按需调整\n\n### 需要帮助？\n加入微信群，一起交流学习（先加Gemini61718或My61718邀请）\n\n祝您玩得开心！",
+        "height": 1180,
+        "width": 420
+      },
+      "id": "cf7f683c-f7f3-4607-b78d-a4e617fdd8ba",
+      "name": "Sticky Note4",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        540,
+        60
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2300,
+        300
+      ],
+      "id": "10b5c20e-87b3-4a18-93d9-f6e492df1b40",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "213702bf-d5c2-4a8a-b5c8-e55f804e4496",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $('POST ChatCompletions').first().json.body.stream }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "057f53d1-d1a1-4833-9df2-b897c257dea9",
+      "name": "Is Stream?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1740,
+        940
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.data }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/event-stream; charset=utf-8"
+              },
+              {
+                "name": "Connection",
+                "value": "keep-alive"
+              },
+              {
+                "name": "X-Accel-Buffering",
+                "value": "no"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2180,
+        840
+      ],
+      "id": "8c22b171-f700-47be-bcac-8a3ac6a9cc3c",
+      "name": "Respond for Steam"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        1040
+      ],
+      "id": "b062e772-53b9-404b-a6a3-bc5697645f0d",
+      "name": "Respond Directly"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        1320,
+        300
+      ],
+      "id": "39b843c4-c6a6-4d9b-8406-909d801f91a9",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1420,
+        500
+      ],
+      "id": "cf70e6df-83da-4c3a-9106-c2a4600eda8d",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Models",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Responses API": {
+      "main": [
+        [
+          {
+            "node": "Is Stream?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST ChatCompletions": {
+      "main": [
+        [
+          {
+            "node": "Remap to Response API Schema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remap to Response API Schema": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Responses API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Models": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Stream Response": {
+      "main": [
+        [
+          {
+            "node": "Respond for Steam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Completion Response": {
+      "main": [
+        [
+          {
+            "node": "Respond Directly",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Stream?": {
+      "main": [
+        [
+          {
+            "node": "Format Stream Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Completion Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "n8n Webhook": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "78ea904f-3636-40f4-8e07-f737205e675c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6d3339a455de9042f2e878a695f7deb5f4532f35c5c36b32185be750c732f184"
+  },
+  "id": "Kk6dSjnGB3xrWAuR",
+  "tags": []
+}
