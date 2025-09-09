@@ -11,7 +11,7 @@
 ## 快速部署
 ### 1. 从Github下载代码
 ```bash
-git clone https://github.com/rv192/CommonRepo.git
+git clone https://github.com/liulisanwan/CommonRepo.git
 cd CommonRepo
 ```
 克隆完成后，你会看到以下目录结构：
@@ -36,6 +36,7 @@ chmod +x build.basic.sh
 
 ### 2. 配置环境变量
 2.1 复制环境变量模板：
+
 ```bash
 cd n8n/docker
 cp env.template .env
@@ -45,17 +46,29 @@ nano .env
 2.2 修改环境变量（注意：必须先配置域名相关设置）：
 ```env
 # 首先修改以下两项，确保使用HTTPS
-N8N_HOST=n8n.yourdomain.com                    # 替换为你的域名
-WEBHOOK_URL=https://n8n.yourdomain.com         # 替换为你的域名，必须使用HTTPS
+# 替换为你的域名
+N8N_HOST=n8n.yourdomain.com
+# 替换为你的域名，必须使用HTTPS
+WEBHOOK_URL=https://n8n.yourdomain.com
 
-# 其他配置项（一般不需要修改）
-POSTGRES_USER=root                             # PostgreSQL用户名
-POSTGRES_PASSWORD=n8n!yyds                     # PostgreSQL密码
-POSTGRES_DB=n8n                                # PostgreSQL数据库名
-N8N_DEFAULT_LOCALE=zh-CN                       # 中文界面的关键配置项
+# 其他配置项
+# PostgreSQL用户名
+POSTGRES_USER=root
+# PostgreSQL密码
+POSTGRES_PASSWORD=n8n!yyds
+# PostgreSQL数据库名                     
+POSTGRES_DB=n8n
+# 中文界面的关键配置项    
+N8N_DEFAULT_LOCALE=zh-CN
 
-N8N_ENCRYPTION_KEY=                             # 首次运行build.sh时自动生成
-N8N_USER_MANAGEMENT_JWT_SECRET=                 # 首次运行build.sh时自动生成
+# Cloudflare Tunnel配置
+CLOUDFLARE_TUNNEL_TOKEN=xxx
+
+# 以下两项会由build.sh自动生成，无需手动设置（非生产环境可以屏蔽）
+# 首次运行build.sh时自动生成，请记下来
+N8N_ENCRYPTION_KEY=
+# 首次运行build.sh时自动生成，请记下来                      
+N8N_USER_MANAGEMENT_JWT_SECRET=
 ```
 
 ### 3. 构建和启动服务
@@ -70,73 +83,17 @@ chmod +x build.sh
 docker ps
 ```
 
-### 4. 配置Nginx
-4.1 修改Nginx配置文件：
-首先修改 nginx/n8n.conf 中的域名，找到Server_name，将 n8n.yourdomain.com 替换为你的实际域名。
-```bash
-nano nginx/n8n.conf
-```
+### 4. 配置cloudflare
+![image-20250909103706635](https://liuli-sanwan.oss-cn-beijing.aliyuncs.com/pic/image-20250909103706635.png)
 
-4.2 部署Nginx配置：
-```bash
-# 复制配置文件到Nginx目录
-sudo cp nginx/n8n.conf /etc/nginx/sites-available/n8n.conf
+![image-20250909103752400](https://liuli-sanwan.oss-cn-beijing.aliyuncs.com/pic/image-20250909103752400.png)
 
-# 创建软链接启用配置
-sudo ln -s /etc/nginx/sites-available/n8n.conf /etc/nginx/sites-enabled/
+![image-20250909103909008](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20250909103909008.png)
 
-# 验证Nginx配置
-sudo nginx -t
 
-# 如果配置正确，重启Nginx
-sudo systemctl restart nginx
-```
 
 ### 5. 配置HTTPS
-5.1 安装certbot（如果未安装）：
-```bash
-sudo apt-get update
-sudo apt-get install certbot python3-certbot-nginx
-```
 
-5.2 获取SSL证书：
-```bash
-sudo certbot --nginx -d n8n.yourdomain.com
-```
-
-5.3 确认Nginx配置：
-Certbot会自动修改Nginx配置，添加SSL相关配置。完成后的配置文件应该包含以下内容：
-```nginx
-server {
-    listen 443 ssl;
-    server_name n8n.yourdomain.com;
-
-    ssl_certificate /etc/letsencrypt/live/n8n.yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/n8n.yourdomain.com/privkey.pem;
-
-    location / {
-        proxy_pass http://localhost:5678;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-
-server {
-    listen 80;
-    server_name n8n.yourdomain.com;
-    return 301 https://$server_name$request_uri;
-}
-```
-
-5.4 验证配置并重启Nginx：
-```bash
-sudo nginx -t && sudo systemctl restart nginx
-```
 
 ## 特性说明
 
