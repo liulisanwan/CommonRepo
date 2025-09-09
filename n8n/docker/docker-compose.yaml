@@ -110,3 +110,11 @@ services:
         condition: service_healthy
       n8n-import:
         condition: service_completed_successfully
+
+  # Cloudflare Tunnel服务
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    networks: ['selfn8n']
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
