@@ -1,5 +1,80 @@
 #!/bin/bash
 
+# 检测操作系统并安装jq
+detect_os_and_install_jq() {
+  # 检查jq是否已安装
+  if command -v jq >/dev/null 2>&1; then
+    echo "jq 已安装，版本: $(jq --version)"
+    return 0
+  fi
+
+  echo "检测到jq未安装，正在检测操作系统并安装..."
+  
+  # 检测操作系统
+  if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Linux系统
+    if command -v apt-get >/dev/null 2>&1; then
+      # Debian/Ubuntu系统
+      echo "检测到Ubuntu/Debian系统，使用apt-get安装jq..."
+      sudo apt-get update
+      sudo apt-get install -y jq
+    elif command -v yum >/dev/null 2>&1; then
+      # CentOS/RHEL系统
+      echo "检测到CentOS/RHEL系统，使用yum安装jq..."
+      sudo yum install -y jq
+    elif command -v dnf >/dev/null 2>&1; then
+      # Fedora系统
+      echo "检测到Fedora系统，使用dnf安装jq..."
+      sudo dnf install -y jq
+    elif command -v pacman >/dev/null 2>&1; then
+      # Arch Linux系统
+      echo "检测到Arch Linux系统，使用pacman安装jq..."
+      sudo pacman -S --noconfirm jq
+    else
+      echo "错误：无法检测到支持的Linux包管理器，请手动安装jq"
+      exit 1
+    fi
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS系统
+    if command -v brew >/dev/null 2>&1; then
+      echo "检测到macOS系统，使用Homebrew安装jq..."
+      brew install jq
+    else
+      echo "错误：macOS系统需要安装Homebrew才能自动安装jq"
+      echo "请访问 https://brew.sh/ 安装Homebrew，或手动安装jq"
+      exit 1
+    fi
+  elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+    # Windows系统（Git Bash或Cygwin环境）
+    echo "检测到Windows系统（MSYS/Cygwin环境）"
+    if command -v pacman >/dev/null 2>&1; then
+      # MSYS2环境
+      echo "使用MSYS2 pacman安装jq..."
+      pacman -S --noconfirm jq
+    else
+      echo "警告：无法在当前Windows环境下自动安装jq"
+      echo "请手动安装jq或使用MSYS2/WSL环境"
+      echo "您可以从 https://github.com/stedolan/jq/releases 下载jq.exe"
+      exit 1
+    fi
+  else
+    echo "错误：无法识别的操作系统类型: $OSTYPE"
+    echo "请手动安装jq"
+    exit 1
+  fi
+
+  # 验证安装
+  if command -v jq >/dev/null 2>&1; then
+    echo "jq 安装成功，版本: $(jq --version)"
+  else
+    echo "错误：jq 安装失败"
+    exit 1
+  fi
+}
+
+# 执行系统检测和jq安装
+detect_os_and_install_jq
+
 # 加载 .env 文件
 set -a
 source .env
